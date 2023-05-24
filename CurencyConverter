@@ -1,0 +1,40 @@
+package org.example.currencyconverter;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.awt.event.MouseAdapter;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.net.URL;
+import java.util.Map;
+import java.util.Scanner;
+
+public class CurencyConverter {
+    public static void main(String[] args) throws IOException {
+            ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            RatesResponse resp = mapper.readValue(new URL("https://api.exchangerate.host/latest"), RatesResponse.class);
+
+            Scanner scanner = new Scanner(System.in);
+
+            System.out.println("Enter the target currency: ");
+            String targetCurrency = scanner.nextLine().toUpperCase();
+
+            System.out.println("Enter the amount in Euros: ");
+            BigDecimal amountInEur = scanner.nextBigDecimal();
+
+            BigDecimal converted = convertCurrency(resp, targetCurrency, amountInEur);
+            System.out.println("Converted amount: " + converted + " " + targetCurrency);
+    }
+
+    public static BigDecimal convertCurrency(RatesResponse ratesResponse, String targetCurrency, BigDecimal amountInEur) {
+        Map<String, BigDecimal> rates = ratesResponse.getRates();
+        BigDecimal conversionRate = rates.get(targetCurrency);
+        if (conversionRate != null) {
+            return amountInEur.multiply(conversionRate).setScale(2, BigDecimal.ROUND_HALF_UP);
+        } else {
+            throw new IllegalArgumentException("Invalid currency: " + targetCurrency);
+        }
+    }
+}
+
